@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useId } from "react";
 import mapboxgl from "mapbox-gl";
+import { v4 } from "uuid";
 
 mapboxgl.accessToken = import.meta.env.VITE_GIPHY_ACCESS_TOKEN;
 
@@ -14,8 +15,11 @@ export const useMapBox = (entryPoint) => {
   // Using useRef to store the map instance
   const mapRef = useRef();
 
+  const markerRef = useRef({});
+
   const [coords, setCoords] = useState(entryPoint);
 
+  // Initialize the map
   useEffect(() => {
     const map = new mapboxgl.Map({
       container: mapDiv.current,
@@ -37,6 +41,19 @@ export const useMapBox = (entryPoint) => {
     });
     // remove event listener on unmount to prevent memory leaks
     return () => mapRef.current?.off("move");
+  }, [mapRef]);
+
+  // Add marker on click
+  useEffect(() => {
+    mapRef.current?.on("click", (e) => {
+      const { lng, lat } = e.lngLat;
+      const marker = new mapboxgl.Marker();
+      marker.id = v4();
+      marker.setLngLat([lng, lat]);
+      marker.addTo(mapRef.current);
+      marker.setDraggable(true);
+      markerRef.current[marker.id] = marker;
+    });
   }, [mapRef]);
 
   return {
