@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useId } from "react";
 import mapboxgl from "mapbox-gl";
 import { v4 } from "uuid";
+import { Subject } from "rxjs";
 
 mapboxgl.accessToken = import.meta.env.VITE_GIPHY_ACCESS_TOKEN;
 
@@ -17,7 +18,42 @@ export const useMapBox = (entryPoint) => {
 
   const markerRef = useRef({});
 
+  // Observables
+  const moveMarker = useRef(new Subject());
+  const newMarker = useRef(new Subject());
+
   const [coords, setCoords] = useState(entryPoint);
+
+  // Add Marker
+  const addMarker = useCallback((e) => {
+    const { lng, lat } = e.lngLat;
+    const marker = new mapboxgl.Marker();
+    marker.id = v4();
+    marker.setLngLat([lng, lat]);
+    marker.addTo(mapRef.current);
+    marker.setDraggable(true);
+    markerRef.current[marker.id] = marker;
+
+    // Add Marker to Observable
+    newMarker.current.next({
+      id: marker.id,
+      lng,
+      lat,
+    });
+
+    // Listen for marker drag events
+    marker.on("drag", ({ target }) => {
+      const { id } = target;
+      const { lng, lat } = target.getLngLat();
+      // Update marker position
+      moveMarker.current.next({
+        id,
+        lng,
+        lat,
+      });
+      console.log(`Marker ${id} dragged to: ${lng}, ${lat}`);
+    });
+  }, []);
 
   // Initialize the map
   useEffect(() => {
@@ -45,19 +81,14 @@ export const useMapBox = (entryPoint) => {
 
   // Add marker on click
   useEffect(() => {
-    mapRef.current?.on("click", (e) => {
-      const { lng, lat } = e.lngLat;
-      const marker = new mapboxgl.Marker();
-      marker.id = v4();
-      marker.setLngLat([lng, lat]);
-      marker.addTo(mapRef.current);
-      marker.setDraggable(true);
-      markerRef.current[marker.id] = marker;
-    });
-  }, [mapRef]);
+    mapRef.current?.on("click", (e) => addMarker(e));
+  }, [mapRef, addMarker]);
 
   return {
+    addMarker,
     coords,
+    moveMarker$: moveMarker.current,
+    newMarker$: newMarker.current,
     setRef,
   };
 };
