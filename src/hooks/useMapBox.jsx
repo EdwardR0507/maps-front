@@ -34,7 +34,7 @@ export const useMapBox = (entryPoint) => {
     marker.setDraggable(true);
     markerRef.current[marker.id] = marker;
 
-    // Add Marker to Observable
+    // Add Marker to Observable if it doesn't exist
     if (!id) {
       newMarker.current.next({
         id: marker.id,
@@ -54,6 +54,12 @@ export const useMapBox = (entryPoint) => {
         lat,
       });
     });
+  }, []);
+
+  // Update the position of a marker
+  const updateMarker = useCallback(({ id, lng, lat }) => {
+    const marker = markerRef.current[id];
+    marker.setLngLat([lng, lat]);
   }, []);
 
   // Initialize the map
@@ -91,5 +97,6 @@ export const useMapBox = (entryPoint) => {
     moveMarker$: moveMarker.current,
     newMarker$: newMarker.current,
     setRef,
+    updateMarker,
   };
 };

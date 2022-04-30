@@ -9,7 +9,7 @@ const entryPoint = {
 };
 
 const Maps = () => {
-  const { addMarker, coords, moveMarker$, newMarker$, setRef } =
+  const { addMarker, coords, moveMarker$, newMarker$, setRef, updateMarker } =
     useMapBox(entryPoint);
 
   const { socket } = useContext(SocketContext);
@@ -21,7 +21,7 @@ const Maps = () => {
         addMarker(markers[key], key);
       }
     });
-  });
+  }, [addMarker, socket]);
 
   useEffect(() => {
     newMarker$.subscribe((marker) => {
@@ -31,15 +31,21 @@ const Maps = () => {
 
   useEffect(() => {
     moveMarker$.subscribe((marker) => {
-      console.log(marker);
+      socket.emit("update-marker", marker);
     });
-  }, [moveMarker$]);
+  }, [moveMarker$, socket]);
+
+  useEffect(() => {
+    socket.on("update-marker", (marker) => {
+      updateMarker(marker);
+    });
+  }, [updateMarker, socket]);
 
   useEffect(() => {
     socket.on("new-marker", (marker) => {
-      console.log("new:", marker);
+      addMarker(marker);
     });
-  }, [socket]);
+  }, [addMarker, socket]);
 
   return (
     <>
