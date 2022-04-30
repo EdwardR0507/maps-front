@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, useId } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { v4 } from "uuid";
 import { Subject } from "rxjs";
@@ -70,7 +70,12 @@ export const useMapBox = (entryPoint) => {
       center: [entryPoint.lng, entryPoint.lat],
       zoom: entryPoint.zoom,
     });
-    map.addControl(new mapboxgl.NavigationControl(), "top-right");
+    map.addControl(
+      new mapboxgl.NavigationControl({
+        showCompass: false,
+      }),
+      "top-right"
+    );
     mapRef.current = map;
   }, []);
 
