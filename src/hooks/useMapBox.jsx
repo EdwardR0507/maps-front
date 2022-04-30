@@ -70,6 +70,7 @@ export const useMapBox = (entryPoint) => {
       center: [entryPoint.lng, entryPoint.lat],
       zoom: entryPoint.zoom,
     });
+    map.addControl(new mapboxgl.NavigationControl(), "top-right");
     mapRef.current = map;
   }, []);
 
