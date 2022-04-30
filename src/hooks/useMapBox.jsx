@@ -3,7 +3,7 @@ import mapboxgl from "mapbox-gl";
 import { v4 } from "uuid";
 import { Subject } from "rxjs";
 
-mapboxgl.accessToken = import.meta.env.VITE_GIPHY_ACCESS_TOKEN;
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 export const useMapBox = (entryPoint) => {
   const mapDiv = useRef();
@@ -25,21 +25,23 @@ export const useMapBox = (entryPoint) => {
   const [coords, setCoords] = useState(entryPoint);
 
   // Add Marker
-  const addMarker = useCallback((e) => {
-    const { lng, lat } = e.lngLat;
+  const addMarker = useCallback((e, id) => {
+    const { lng, lat } = e.lngLat || e;
     const marker = new mapboxgl.Marker();
-    marker.id = v4();
+    marker.id = id ?? v4();
     marker.setLngLat([lng, lat]);
     marker.addTo(mapRef.current);
     marker.setDraggable(true);
     markerRef.current[marker.id] = marker;
 
     // Add Marker to Observable
-    newMarker.current.next({
-      id: marker.id,
-      lng,
-      lat,
-    });
+    if (!id) {
+      newMarker.current.next({
+        id: marker.id,
+        lng,
+        lat,
+      });
+    }
 
     // Listen for marker drag events
     marker.on("drag", ({ target }) => {
@@ -51,7 +53,6 @@ export const useMapBox = (entryPoint) => {
         lng,
         lat,
       });
-      console.log(`Marker ${id} dragged to: ${lng}, ${lat}`);
     });
   }, []);
 

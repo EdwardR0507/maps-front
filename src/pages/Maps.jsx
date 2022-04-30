@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
+import { SocketContext } from "../context/SocketContext";
 import { useMapBox } from "../hooks/useMapBox";
 
 const entryPoint = {
@@ -8,18 +9,37 @@ const entryPoint = {
 };
 
 const Maps = () => {
-  const { coords, moveMarker$, newMarker$, setRef } = useMapBox(entryPoint);
+  const { addMarker, coords, moveMarker$, newMarker$, setRef } =
+    useMapBox(entryPoint);
+
+  const { socket } = useContext(SocketContext);
+
+  // Listen for existing markers
+  useEffect(() => {
+    socket.on("active-markers", (markers) => {
+      for (const key of Object.keys(markers)) {
+        addMarker(markers[key], key);
+      }
+    });
+  });
+
   useEffect(() => {
     newMarker$.subscribe((marker) => {
-      console.log(marker);
+      socket.emit("new-marker", marker);
     });
-  }, [newMarker$]);
+  }, [newMarker$, socket]);
 
   useEffect(() => {
     moveMarker$.subscribe((marker) => {
       console.log(marker);
     });
   }, [moveMarker$]);
+
+  useEffect(() => {
+    socket.on("new-marker", (marker) => {
+      console.log("new:", marker);
+    });
+  }, [socket]);
 
   return (
     <>
